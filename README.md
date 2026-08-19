@@ -1,12 +1,12 @@
 # Salesforce–Databricks Deal Automation
 
-A rules-driven deal registration workflow for evaluating Salesforce opportunities against Databricks registration requirements, validating readiness, mapping fields across system boundaries, managing human approval, and preserving an auditable lifecycle.
+A small, rules-driven workflow engine for automating Salesforce opportunity → Databricks deal registration.
 
-> **Current scope:** local MVP with a Salesforce-shaped CSV source and SQLite audit store. External Salesforce and Databricks integrations are intentionally isolated behind adapters and are not claimed as implemented yet.
+> **Current scope:** local MVP using synthetic Salesforce-shaped data, SQLite persistence, a deterministic workflow engine, and a mock Databricks registration adapter. Real Salesforce/Databricks credentials and external contracts are intentionally not committed or claimed.
 
 ## Problem
 
-Deal-registration workflows often span CRM data, partner rules, manual review, external submission, and follow-up tracking. The goal of this project is to create a clear, testable workflow engine so that business rules are separated from source-system and destination-system integrations.
+Deal registration can require CRM data extraction, eligibility rules, validation, human approval, downstream submission, retries, and auditability. This project keeps those responsibilities explicit and testable instead of coupling business rules to Salesforce or Databricks implementation details.
 
 ## Architecture
 
@@ -14,110 +14,137 @@ Deal-registration workflows often span CRM data, partner rules, manual review, e
 Salesforce / Mock Source
           |
           v
-    Source Adapter
+    Salesforce Adapter
           |
           v
-   Canonical Deal Model
+     Canonical Deal
           |
           v
-    Eligibility Engine
+ Eligibility + Validation
           |
-     +----+----+
-     |         |
- Eligible    Not Eligible
-     |
-     v
- Validation Engine
-     |
- +---+---+
- |       |
-Valid   Invalid
- |
- v
-Field Mapping
- |
- v
-Registration Request
- |
- v
-Workflow State Machine
- |
- +------------------------------+
- |              |               |
-Approve       Reject         Exception
- |
- v
-Submission Adapter
- |
- +------------+-------------+
- |                          |
-Manual Portal          Future API
- |
- v
-Registration Result
- |
- v
-Immutable Audit Events
+          v
+ Registration Request
+          |
+          v
+ Approval State Machine
+          |
+          v
+  Salesforce → DBX Mapping
+          |
+          v
+ Databricks Registration Adapter
+          |
+          v
+ Registration Result
+          |
+          +-------------------+
+          |                   |
+          v                   v
+   Durable Idempotency     Audit History
 ```
 
-## Core capabilities
+The core lifecycle is deterministic:
 
-- Source abstraction for Salesforce / local mock data
-- Eligibility rules separated from data validation
-- Configurable field mapping
-- Strongly defined registration workflow states
-- Explicit handling for unknown submission outcomes
-- Immutable audit-event design
-- Unit and integration-testable business logic
-- CI validation through GitHub Actions
-- Clear separation between implemented MVP behavior and future integrations
+```text
+NEW
+ ↓
+ELIGIBLE
+ ↓
+VALIDATED
+ ↓
+READY_FOR_REVIEW
+ ↓
+APPROVED
+ ↓
+SUBMITTED
+ ↓
+REGISTERED
+```
+
+Exception states such as `NOT_ELIGIBLE`, `VALIDATION_FAILED`, `SUBMISSION_FAILED`, and `SUBMISSION_UNKNOWN` are explicit.
+
+## Implemented capabilities
+
+- Salesforce-shaped mock adapter with CSV fixtures
+- Incremental processing contract using source update timestamps
+- Successful-sync watermark semantics
+- Canonical `Deal` domain model
+- Deterministic eligibility and validation
+- Explicit field mapping across system boundaries
+- Strict registration state transitions
+- Human approval workflow
+- UUID-based registration request identity
+- Durable SQLite request/audit persistence
+- Immutable registration event history
+- Deterministic deal fingerprinting
+- Durable idempotency store
+- Mock Databricks registration adapter
+- Retry/timeout boundaries for the real external adapters
+- GitHub Actions CI with automated pytest execution
+- Unit and integration tests covering the workflow and external boundaries
 
 ## Repository structure
 
 ```text
 app.py                  Streamlit presentation layer
-config/                 configurable business rules
-domain/                 domain models, states, exceptions
-services/               business services
-adapters/               source and destination integration boundaries
-audit/                  request state + immutable event history
+config/                 configuration and business rules
+domain/                 domain models, states and exceptions
+services/               workflow, validation, mapping and processing
+adapters/               Salesforce and Databricks integration boundaries
+audit/                  request, event and idempotency persistence
 data/                   synthetic local fixtures
-ai/                     future AI-assisted policy/readiness capabilities
 tests/                  unit and integration tests
-docs/                   architecture, ADRs and workflow documentation
+docs/                   architecture and workflow documentation
 .github/workflows/      CI automation
 ```
 
-## Current integration boundary
+## External integration boundary
 
-The local application uses synthetic opportunity data. The Salesforce adapter is the boundary where a real Salesforce Sandbox/API implementation can be introduced later. The Databricks adapter is similarly isolated so the core workflow does not depend on browser automation or undocumented external interfaces.
+The repository intentionally separates the local MVP from real external connectivity:
+
+```text
+Current
+CSV → Salesforce adapter → workflow → mock DBX adapter → SQLite audit
+
+Target
+Salesforce Sandbox/API → workflow → authorized Databricks interface
+```
+
+The real downstream contract should be introduced only after its authorized schema/API is confirmed.
 
 ## Engineering principles
 
-1. **Rules decide; AI may explain.** Deterministic eligibility and validation remain authoritative.
-2. **Integrations stay at the edge.** Salesforce and Databricks details should not leak into domain logic.
-3. **Unknown external outcomes are explicit.** Never mark a submission registered without confirmation.
-4. **Audit history is immutable.** State changes are events, not overwritten history.
-5. **Implemented vs planned is explicit.** Documentation never claims an integration that is only a design placeholder.
+1. **Rules decide; AI may explain.** Deterministic business rules remain authoritative.
+2. **Integrations stay at the edge.** Salesforce and Databricks details do not leak into domain logic.
+3. **Idempotency is explicit.** Re-delivery of the same business version must not create duplicate registrations.
+4. **Unknown outcomes are explicit.** A request is not marked registered without confirmation.
+5. **Audit history is immutable.** State transitions are recorded as events.
+6. **Simple architecture wins.** No Bronze/Silver/Gold or extra platform components are introduced unless the business requirement actually needs them.
+7. **Implemented vs planned is explicit.** Documentation does not claim a production integration that is only a mock or design boundary.
 
 ## Roadmap
 
-- [x] Local deal workflow prototype
-- [x] Eligibility, validation and mapping foundations
-- [x] Registration lifecycle model
-- [ ] Immutable audit event history
-- [ ] Salesforce Sandbox adapter
-- [ ] Databricks registration adapter based on confirmed interface/contract
+- [x] Local workflow MVP
+- [x] Eligibility, validation and mapping
+- [x] Approval state machine
+- [x] Incremental processing contract
+- [x] Durable request and audit persistence
+- [x] Durable idempotency
+- [x] Mock DBX registration adapter
+- [x] CI + automated tests
+- [ ] Salesforce Sandbox/API implementation
+- [ ] Confirmed Databricks registration contract
 - [ ] Authentication and role-based approval
-- [ ] Workflow metrics and operational SLAs
-- [ ] AI-assisted policy extraction and readiness explanation
+- [ ] Operational metrics and SLAs
+- [ ] AI-assisted policy extraction and grounded readiness explanations
 
 ## Local development
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+pip install -e '.[test]'
 pytest
 streamlit run app.py
 ```
@@ -130,4 +157,4 @@ Windows PowerShell activation:
 
 ## Data safety
 
-Only synthetic/sample data belongs in this repository. Do not commit Salesforce credentials, security tokens, access tokens, production exports, or real customer/deal information.
+Only synthetic/sample data belongs in this repository. Never commit Salesforce credentials, security tokens, access tokens, production exports, or real customer/deal information.

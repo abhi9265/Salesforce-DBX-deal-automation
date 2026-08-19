@@ -1,1 +1,0 @@
-CI gate: pytest must pass before merge.

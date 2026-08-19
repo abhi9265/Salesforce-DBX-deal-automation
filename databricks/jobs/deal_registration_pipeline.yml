@@ -1,0 +1,21 @@
+resources:
+  jobs:
+    deal_registration_pipeline:
+      name: deal-registration-${bundle.target}
+      tasks:
+        - task_key: bronze_ingestion
+          notebook_task:
+            notebook_path: /Workspace/Shared/deal-registration/bronze_ingestion
+        - task_key: silver_incremental
+          depends_on:
+            - task_key: bronze_ingestion
+          notebook_task:
+            notebook_path: /Workspace/Shared/deal-registration/silver_incremental
+        - task_key: gold_metrics
+          depends_on:
+            - task_key: silver_incremental
+          notebook_task:
+            notebook_path: /Workspace/Shared/deal-registration/gold_metrics
+      parameters:
+        - name: environment
+          default: ${bundle.target}

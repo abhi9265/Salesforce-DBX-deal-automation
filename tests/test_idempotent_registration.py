@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 from domain.models import Deal, RegistrationRequest
 from services.idempotency import deal_fingerprint
@@ -26,9 +25,11 @@ class MemoryStore:
 class Gateway:
     def __init__(self):
         self.calls = 0
+        self.request_ids = []
 
-    def submit(self, request, payload):
+    def submit(self, payload, request_id):
         self.calls += 1
+        self.request_ids.append(request_id)
         return Result(accepted=True)
 
 
@@ -51,6 +52,7 @@ def test_same_deal_version_is_submitted_once():
     assert first.processed is True
     assert second.skipped is True
     assert gateway.calls == 1
+    assert gateway.request_ids == [request.request_id]
 
 
 def test_business_change_produces_new_fingerprint():

@@ -29,8 +29,8 @@ class Gateway:
         return Result(True)
 
 
-def approved_request():
-    request = RegistrationRequest("OPP-006")
+def approved_request(opportunity_id: str) -> RegistrationRequest:
+    request = RegistrationRequest(opportunity_id)
     request.transition(RegistrationStatus.ELIGIBLE)
     request.transition(RegistrationStatus.VALIDATED)
     request.transition(RegistrationStatus.READY_FOR_REVIEW)
@@ -38,30 +38,44 @@ def approved_request():
     return request
 
 
-def test_successful_submission_reaches_registered_and_audits(tmp_path):
+def test_successful_submission_reaches_registered_and_persists(tmp_path):
     deal = Deal("OPP-006", "Acme", "Platform", "India", 100.0, "Technology", "Databricks", "2026-09-30", True, "Not Registered")
-    request = approved_request()
+    request = approved_request("OPP-006")
     audit = AuditRepository(tmp_path / "audit.db")
-    result = RegistrationProcessor(Store(), Gateway(), audit).process(deal, request, {"deal_name": "Platform"})
+
+    result = RegistrationProcessor(Store(), Gateway(), audit).process(
+        deal, request, {"deal_name": "Platform"}
+    )
 
     assert result.processed is True
     assert request.status == RegistrationStatus.REGISTERED
     assert request.registration_number == "DBX-TEST"
-    history = audit.history(request.request_id)
-    assert [event["to_status"] for event in history] == ["SUBMITTED", "REGISTERED"]
+    assert [event["to_status"] for event in audit.list_events(request.request_id)] == [
+        "SUBMITTED", "REGISTERED"
+    ]
+    persisted = audit.get_request(request.request_id)
+    assert persisted is not None
+    assert persisted["status"] == "REGISTERED"
+    assert persisted["registration_number"] == "DBX-TEST"
 
 
-def test_failed_submission_is_audited(tmp_path):
+def test_failed_submission_is_persisted_and_audited(tmp_path):
     class FailedGateway:
         def submit(self, payload, request_id):
             return Result(False, registration_number=None, message="downstream unavailable")
 
     deal = Deal("OPP-007", "Acme", "Platform", "India", 100.0, "Technology", "Databricks", "2026-09-30", True, "Not Registered")
-    request = approved_request()
-    request.opportunity_id = "OPP-007"
+    request = approved_request("OPP-007")
     audit = AuditRepository(tmp_path / "audit.db")
-    result = RegistrationProcessor(Store(), FailedGateway(), audit).process(deal, request, {"deal_name": "Platform"})
+
+    result = RegistrationProcessor(Store(), FailedGateway(), audit).process(
+        deal, request, {"deal_name": "Platform"}
+    )
 
     assert result.processed is False
     assert request.status == RegistrationStatus.SUBMISSION_FAILED
-    assert audit.history(request.request_id)[0]["to_status"] == "SUBMISSION_FAILED"
+    assert audit.list_events(request.request_id)[0]["to_status"] == "SUBMISSION_FAILED"
+    persisted = audit.get_request(request.request_id)
+    assert persisted is not None
+    assert persisted["status"] == "SUBMISSION_FAILED"
+    assert persisted["error"] == "downstream unavailable"

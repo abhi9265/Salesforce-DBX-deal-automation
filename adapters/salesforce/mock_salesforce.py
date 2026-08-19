@@ -13,7 +13,7 @@ class MockSalesforceAdapter:
         self.records = records or []
 
     def fetch_opportunities(self) -> list[Deal]:
-        return [Deal.from_salesforce(record) for record in self.records]
+        return [Deal.from_salesforce_row(record) for record in self.records]
 
     def fetch_updated_since(self, watermark: datetime | None) -> list[Deal]:
         deals = self.fetch_opportunities()

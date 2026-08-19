@@ -127,3 +127,7 @@ class AuditRepository:
                 "SELECT * FROM registration_events WHERE request_id = ? ORDER BY occurred_at, rowid",
                 (str(request_id),),
             ))
+
+    def history(self, request_id: UUID) -> list[dict[str, Any]]:
+        """Compatibility view for callers that need JSON-like event records."""
+        return [dict(event) for event in self.list_events(request_id)]

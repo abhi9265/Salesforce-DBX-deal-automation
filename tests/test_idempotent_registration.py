@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from dataclasses import replace
 
 from domain.models import Deal, RegistrationRequest
 from services.idempotency import deal_fingerprint
@@ -54,5 +55,5 @@ def test_same_deal_version_is_submitted_once():
 
 def test_business_change_produces_new_fingerprint():
     original = deal()
-    changed = Deal(**{**original.__dict__, "amount": 125000})
+    changed = replace(original, amount=125000)
     assert deal_fingerprint(original) != deal_fingerprint(changed)

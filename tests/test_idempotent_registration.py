@@ -1,6 +1,7 @@
 from dataclasses import dataclass, replace
 
 from domain.models import Deal, RegistrationRequest
+from domain.states import RegistrationStatus
 from services.idempotency import deal_fingerprint
 from services.registration_processor import RegistrationProcessor
 
@@ -8,6 +9,7 @@ from services.registration_processor import RegistrationProcessor
 @dataclass
 class Result:
     accepted: bool
+    registration_number: str | None = "DBX-TEST"
     message: str = "ok"
 
 
@@ -42,10 +44,20 @@ def deal():
     )
 
 
+def approved_request() -> RegistrationRequest:
+    request = RegistrationRequest("OPP-001")
+    request.transition(RegistrationStatus.ELIGIBLE)
+    request.transition(RegistrationStatus.VALIDATED)
+    request.transition(RegistrationStatus.READY_FOR_REVIEW)
+    request.approve("manager@example.com")
+    return request
+
+
 def test_same_deal_version_is_submitted_once():
     store, gateway = MemoryStore(), Gateway()
     processor = RegistrationProcessor(store, gateway)
-    request = RegistrationRequest("OPP-001")
+    request = approved_request()
+
     first = processor.process(deal(), request, {"customer_name": "Acme"})
     second = processor.process(deal(), request, {"customer_name": "Acme"})
 
@@ -53,6 +65,19 @@ def test_same_deal_version_is_submitted_once():
     assert second.skipped is True
     assert gateway.calls == 1
     assert gateway.request_ids == [request.request_id]
+
+
+def test_unapproved_request_is_not_submitted():
+    store, gateway = MemoryStore(), Gateway()
+    processor = RegistrationProcessor(store, gateway)
+    request = RegistrationRequest("OPP-001")
+
+    result = processor.process(deal(), request, {"customer_name": "Acme"})
+
+    assert result.processed is False
+    assert result.skipped is True
+    assert result.reason == "registration_requires_approval"
+    assert gateway.calls == 0
 
 
 def test_business_change_produces_new_fingerprint():

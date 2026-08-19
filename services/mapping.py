@@ -2,19 +2,22 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+# Canonical synthetic Salesforce fixture field names.
 SALESFORCE_TO_INTERNAL = {
-    "Opportunity_ID": "opportunity_id",
-    "Account_Name": "account_name",
-    "Opportunity_Name": "opportunity_name",
+    "OpportunityId": "opportunity_id",
+    "AccountName": "account_name",
+    "OpportunityName": "opportunity_name",
     "Country": "country",
     "Amount": "amount",
     "Industry": "industry",
     "Partner": "partner",
-    "Close_Date": "close_date",
-    "Registration_Required": "registration_required",
-    "Registration_Status": "registration_status",
+    "CloseDate": "close_date",
+    "RegistrationRequired": "registration_required",
+    "RegistrationStatus": "registration_status",
 }
 
+# Draft DBX contract. This remains explicitly versioned as a proposal until
+# the real downstream Databricks registration interface is confirmed.
 INTERNAL_TO_DBX_DRAFT = {
     "account_name": "customer_name",
     "opportunity_name": "deal_name",

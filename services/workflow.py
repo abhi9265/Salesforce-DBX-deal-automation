@@ -52,7 +52,7 @@ class DealRegistrationWorkflow:
             request.opportunity_id,
             previous.value,
             request.status.value,
-            approver,
+            actor=approver,
         )
         return request
 

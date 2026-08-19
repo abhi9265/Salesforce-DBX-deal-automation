@@ -1,0 +1,26 @@
+OpportunityId,AccountName,OpportunityName,Amount,Stage,CloseDate,Partner,RegistrationRequired,RegistrationStatus,Industry,Country
+OPP-1001,Acme Retail,Acme Data Modernization,125000,Proposal,2026-09-15,Databricks,true,Not Registered,Retail,India
+OPP-1002,Northwind Health,Northwind Lakehouse,85000,Negotiation,2026-10-01,Databricks,true,Not Registered,Healthcare,USA
+OPP-1003,Contoso Finance,Contoso Analytics,210000,Qualification,2026-11-20,Other,true,Not Registered,Financial Services,UK
+OPP-1004,Fabrikam Manufacturing,Fabrikam Migration,175000,Proposal,2026-09-30,Databricks,false,Not Registered,Manufacturing,Germany
+OPP-1005,Globex Media,Globex AI Platform,95000,Negotiation,2026-09-10,Databricks,true,Registered,Media,India
+OPP-1006,Adventure Works,Adventure Lakehouse,145000,Proposal,2026-10-18,Databricks,true,Not Registered,Retail,USA
+OPP-1007,Blue Yonder,Blue Yonder Modernization,,Proposal,2026-10-22,Databricks,true,Not Registered,Logistics,India
+OPP-1008,Wayne Enterprises,Wayne Data Platform,-5000,Negotiation,2026-10-25,Databricks,true,Not Registered,Technology,USA
+OPP-1009,Stark Industries,Stark Analytics,320000,Negotiation,invalid-date,Databricks,true,Not Registered,Manufacturing,USA
+OPP-1010,Initech,Initech Lakehouse,110000,Proposal,2026-11-05,Databricks,true,Not Registered,Technology,India
+OPP-1011,Umbrella Health,Umbrella Platform,73000,Qualification,2026-12-01,Databricks,true,Not Registered,Healthcare,USA
+OPP-1012,Wonka Foods,Wonka Data Estate,66000,Proposal,2026-10-12,Databricks,true,Not Registered,Consumer Goods,UK
+OPP-1013,Hooli,Hooli Modern Data Stack,240000,Negotiation,2026-09-28,Databricks,true,Not Registered,Technology,USA
+OPP-1014,Massive Dynamic,Massive Dynamic Lakehouse,155000,Proposal,2026-10-08,Databricks,true,Not Registered,Technology,India
+OPP-1015,Oceanic Airlines,Oceanic Analytics,132000,Qualification,2026-11-15,Databricks,true,Not Registered,Travel,Australia
+OPP-1016,Prestige Worldwide,Prestige Data Platform,118000,Proposal,2026-10-30,Databricks,true,Not Registered,Entertainment,USA
+OPP-1017,Tyrell Corporation,Tyrell Migration,99000,Negotiation,2026-09-19,Other,true,Not Registered,Technology,USA
+OPP-1018,Vandelay Industries,Vandelay Integration,87000,Proposal,2026-11-09,Databricks,true,Not Registered,Manufacturing,USA
+OPP-1019,Wonka Foods,Wonka Expansion,76000,Proposal,2026-12-10,Databricks,true,Not Registered,Consumer Goods,India
+OPP-1020,Globex Media,Globex Streaming,102000,Negotiation,2026-10-05,Databricks,true,Not Registered,Media,India
+OPP-1021,Acme Retail,Acme Customer 360,131000,Proposal,2026-09-27,Databricks,true,Not Registered,Retail,India
+OPP-1022,Northwind Health,Northwind AI Analytics,205000,Negotiation,2026-11-02,Databricks,true,Not Registered,Healthcare,USA
+OPP-1023,Contoso Finance,Contoso Risk Platform,188000,Proposal,2026-10-16,Databricks,true,Not Registered,Financial Services,UK
+OPP-1024,Fabrikam Manufacturing,Fabrikam IoT Analytics,143000,Qualification,2026-12-05,Databricks,true,Not Registered,Manufacturing,Germany
+OPP-1025,Adventure Works,Adventure Customer Analytics,127000,Proposal,2026-10-20,Databricks,true,Not Registered,Retail,USA

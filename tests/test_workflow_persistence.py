@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from audit.repository import AuditRepository
 from domain.models import Deal
 from services.workflow import DealRegistrationWorkflow
-from audit.repository_v2 import AuditRepositoryV2
 
 
 def test_request_and_event_history_are_persisted(tmp_path):
-    audit = AuditRepositoryV2(tmp_path / "registrations.db")
+    audit = AuditRepository(tmp_path / "registrations.db")
     workflow = DealRegistrationWorkflow(audit)
     deal = Deal(
         opportunity_id="OPP-001",

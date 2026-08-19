@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=69,<81"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "salesforce-dbx-deal-automation"
 version = "0.2.0"
@@ -14,6 +18,10 @@ dependencies = [
 test = [
   "pytest>=8,<9",
 ]
+
+[tool.setuptools.packages.find]
+include = ["adapters*", "audit*", "config*", "domain*", "services*"]
+exclude = ["tests*", "src*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,12 +1,12 @@
-from domain.models import Deal
-from audit.repository_complete import AuditRepositoryComplete
-from services.workflow import DealRegistrationWorkflow
-from services.mapping import map_to_dbx_draft
 from adapters.databricks.registration import DatabricksRegistrationAdapter
+from audit.repository import AuditRepository
+from domain.models import Deal
+from services.mapping import map_to_dbx_draft
+from services.workflow import DealRegistrationWorkflow
 
 
 def test_end_to_end_ready_for_external_registration(tmp_path):
-    audit = AuditRepositoryComplete(tmp_path / "audit.db")
+    audit = AuditRepository(tmp_path / "audit.db")
     workflow = DealRegistrationWorkflow(audit)
     deal = Deal(
         opportunity_id="OPP-E2E-001", account_name="Acme Corp",
@@ -31,5 +31,6 @@ def test_end_to_end_ready_for_external_registration(tmp_path):
         "close_date": deal.close_date,
     })
     result = DatabricksRegistrationAdapter().submit(payload, request.request_id)
+
     assert result.accepted
     assert result.registration_number.startswith("DBX-")

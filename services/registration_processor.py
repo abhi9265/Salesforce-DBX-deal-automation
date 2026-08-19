@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Protocol
-from uuid import UUID
 
 from domain.models import Deal, RegistrationRequest
 from services.idempotency import ProcessedDealStore, deal_fingerprint
 
 
 class RegistrationGateway(Protocol):
-    def submit(self, request: RegistrationRequest, payload: dict[str, Any]) -> Any: ...
+    def submit(self, payload: dict[str, Any], request_id):
+        """Submit the mapped payload using the registration request identity."""
+        ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,11 +31,21 @@ class RegistrationProcessor:
     def process(self, deal: Deal, request: RegistrationRequest, payload: dict[str, Any]) -> ProcessingResult:
         fingerprint = deal_fingerprint(deal)
         if self.store.has_processed(deal.opportunity_id, fingerprint):
-            return ProcessingResult(request=request, processed=False, skipped=True, reason="unchanged_source_version")
+            return ProcessingResult(
+                request=request,
+                processed=False,
+                skipped=True,
+                reason="unchanged_source_version",
+            )
 
-        result = self.gateway.submit(request, payload)
+        result = self.gateway.submit(payload, request.request_id)
         if not getattr(result, "accepted", False):
-            return ProcessingResult(request=request, processed=False, skipped=False, reason=getattr(result, "message", "submission_failed"))
+            return ProcessingResult(
+                request=request,
+                processed=False,
+                skipped=False,
+                reason=getattr(result, "message", "submission_failed"),
+            )
 
         self.store.mark_processed(deal.opportunity_id, fingerprint)
         return ProcessingResult(request=request, processed=True, skipped=False)

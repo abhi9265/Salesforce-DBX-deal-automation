@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
 
-from domain.exceptions import InvalidTransitionError
 from domain.states import RegistrationStatus, assert_transition
 
 
@@ -24,6 +23,29 @@ class Deal:
     source_system: str = "mock"
     source_record_id: str | None = None
     raw: dict[str, Any] = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_salesforce_row(cls, row: dict[str, Any]) -> "Deal":
+        amount_raw = row.get("Amount")
+        try:
+            amount = float(amount_raw) if amount_raw not in (None, "") else None
+        except (TypeError, ValueError):
+            amount = None
+        return cls(
+            opportunity_id=str(row.get("OpportunityId", "")).strip(),
+            account_name=str(row.get("AccountName", "")).strip(),
+            opportunity_name=str(row.get("OpportunityName", "")).strip(),
+            country=str(row.get("Country", "")).strip(),
+            amount=amount,
+            industry=str(row.get("Industry", "")).strip(),
+            partner=str(row.get("Partner", "")).strip(),
+            close_date=str(row.get("CloseDate", "")).strip(),
+            registration_required=str(row.get("RegistrationRequired", "")).strip().lower() == "true",
+            registration_status=str(row.get("RegistrationStatus", "")).strip(),
+            source_system="salesforce-mock",
+            source_record_id=str(row.get("OpportunityId", "")).strip(),
+            raw=dict(row),
+        )
 
 
 @dataclass(slots=True)

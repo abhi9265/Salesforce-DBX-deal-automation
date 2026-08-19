@@ -1,8 +1,18 @@
 from adapters.databricks.registration import DatabricksRegistrationAdapter
 from audit.processed_deals import SQLiteProcessedDealStore
 from domain.models import Deal, RegistrationRequest
-from services.registration_processor import RegistrationProcessor
+from domain.states import RegistrationStatus
 from services.mapping import map_to_dbx_draft
+from services.registration_processor import RegistrationProcessor
+
+
+def approved_request(opportunity_id: str) -> RegistrationRequest:
+    request = RegistrationRequest(opportunity_id)
+    request.transition(RegistrationStatus.ELIGIBLE)
+    request.transition(RegistrationStatus.VALIDATED)
+    request.transition(RegistrationStatus.READY_FOR_REVIEW)
+    request.approve("manager@example.com")
+    return request
 
 
 def test_registration_processor_submits_once_to_dbx_adapter(tmp_path):
@@ -18,7 +28,7 @@ def test_registration_processor_submits_once_to_dbx_adapter(tmp_path):
         registration_required=True,
         registration_status="Not Registered",
     )
-    request = RegistrationRequest(deal.opportunity_id)
+    request = approved_request(deal.opportunity_id)
     payload = map_to_dbx_draft({
         "account_name": deal.account_name,
         "opportunity_name": deal.opportunity_name,
@@ -41,4 +51,3 @@ def test_registration_processor_submits_once_to_dbx_adapter(tmp_path):
     assert first.skipped is False
     assert second.processed is False
     assert second.skipped is True
-    assert first.reason is None

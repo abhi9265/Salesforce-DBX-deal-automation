@@ -22,6 +22,7 @@ class Deal:
     registration_status: str
     source_system: str = "mock"
     source_record_id: str | None = None
+    source_updated_at: datetime | None = None
     raw: dict[str, Any] = field(default_factory=dict, repr=False)
 
     @classmethod
@@ -31,6 +32,11 @@ class Deal:
             amount = float(amount_raw) if amount_raw not in (None, "") else None
         except (TypeError, ValueError):
             amount = None
+        updated_raw = row.get("LastModifiedDate")
+        try:
+            source_updated_at = datetime.fromisoformat(str(updated_raw).replace("Z", "+00:00")) if updated_raw else None
+        except ValueError:
+            source_updated_at = None
         return cls(
             opportunity_id=str(row.get("OpportunityId", "")).strip(),
             account_name=str(row.get("AccountName", "")).strip(),
@@ -44,6 +50,7 @@ class Deal:
             registration_status=str(row.get("RegistrationStatus", "")).strip(),
             source_system="salesforce-mock",
             source_record_id=str(row.get("OpportunityId", "")).strip(),
+            source_updated_at=source_updated_at,
             raw=dict(row),
         )
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 from uuid import UUID
 
 import requests
@@ -10,13 +11,21 @@ from config.integrations import DatabricksRegistrationConfig
 
 
 class DatabricksRegistrationHttpAdapter:
-    """Configurable downstream HTTP boundary for the authorized DBX registration API."""
+    """Configurable downstream HTTP boundary for DBX registration."""
 
-    def __init__(self, config: DatabricksRegistrationConfig, session: requests.Session | None = None) -> None:
+    def __init__(
+        self,
+        config: DatabricksRegistrationConfig,
+        session: requests.Session | None = None,
+    ) -> None:
         self.config = config
         self.session = session or requests.Session()
 
-    def submit(self, payload: Mapping[str, Any], request_id: UUID) -> RegistrationResult:
+    def submit(
+        self,
+        payload: Mapping[str, Any],
+        request_id: UUID,
+    ) -> RegistrationResult:
         response = self.session.post(
             self.config.endpoint,
             headers={
@@ -35,5 +44,14 @@ class DatabricksRegistrationHttpAdapter:
                 message=body.get("message"),
             )
         if response.status_code in {408, 429, 500, 502, 503, 504}:
-            return RegistrationResult(False, message="Downstream DBX registration is retryable")
-        return RegistrationResult(False, message=f"Downstream DBX registration rejected: HTTP {response.status_code}")
+            return RegistrationResult(
+                False,
+                message="Downstream DBX registration is retryable",
+            )
+        return RegistrationResult(
+            False,
+            message=(
+                "Downstream DBX registration rejected: "
+                f"HTTP {response.status_code}"
+            ),
+        )

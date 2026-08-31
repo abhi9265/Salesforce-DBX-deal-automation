@@ -32,11 +32,17 @@ class Deal:
             amount = float(amount_raw) if amount_raw not in (None, "") else None
         except (TypeError, ValueError):
             amount = None
+
         updated_raw = row.get("LastModifiedDate")
         try:
-            source_updated_at = datetime.fromisoformat(str(updated_raw).replace("Z", "+00:00")) if updated_raw else None
+            source_updated_at = (
+                datetime.fromisoformat(str(updated_raw).replace("Z", "+00:00"))
+                if updated_raw
+                else None
+            )
         except ValueError:
             source_updated_at = None
+
         return cls(
             opportunity_id=str(row.get("OpportunityId", "")).strip(),
             account_name=str(row.get("AccountName", "")).strip(),
@@ -46,7 +52,9 @@ class Deal:
             industry=str(row.get("Industry", "")).strip(),
             partner=str(row.get("Partner", "")).strip(),
             close_date=str(row.get("CloseDate", "")).strip(),
-            registration_required=str(row.get("RegistrationRequired", "")).strip().lower() == "true",
+            registration_required=(
+                str(row.get("RegistrationRequired", "")).strip().lower() == "true"
+            ),
             registration_status=str(row.get("RegistrationStatus", "")).strip(),
             source_system="salesforce-mock",
             source_record_id=str(row.get("OpportunityId", "")).strip(),
@@ -81,7 +89,9 @@ class RegistrationRequest:
         self.submitted_at = datetime.now(timezone.utc).isoformat()
         self.registration_number = registration_number
         self.transition(
-            RegistrationStatus.SUBMITTED if registration_number else RegistrationStatus.SUBMISSION_UNKNOWN
+            RegistrationStatus.SUBMITTED
+            if registration_number
+            else RegistrationStatus.SUBMISSION_UNKNOWN
         )
 
     def mark_registered(self, registration_number: str) -> None:

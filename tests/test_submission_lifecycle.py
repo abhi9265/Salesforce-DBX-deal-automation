@@ -39,7 +39,18 @@ def approved_request(opportunity_id: str) -> RegistrationRequest:
 
 
 def test_successful_submission_reaches_registered_and_persists(tmp_path):
-    deal = Deal("OPP-006", "Acme", "Platform", "India", 100.0, "Technology", "Databricks", "2026-09-30", True, "Not Registered")
+    deal = Deal(
+        "OPP-006",
+        "Acme",
+        "Platform",
+        "India",
+        100.0,
+        "Technology",
+        "Databricks",
+        "2026-09-30",
+        True,
+        "Not Registered",
+    )
     request = approved_request("OPP-006")
     audit = AuditRepository(tmp_path / "audit.db")
 
@@ -51,7 +62,8 @@ def test_successful_submission_reaches_registered_and_persists(tmp_path):
     assert request.status == RegistrationStatus.REGISTERED
     assert request.registration_number == "DBX-TEST"
     assert [event["to_status"] for event in audit.list_events(request.request_id)] == [
-        "SUBMITTED", "REGISTERED"
+        "SUBMITTED",
+        "REGISTERED",
     ]
     persisted = audit.get_request(request.request_id)
     assert persisted is not None
@@ -62,9 +74,24 @@ def test_successful_submission_reaches_registered_and_persists(tmp_path):
 def test_failed_submission_is_persisted_and_audited(tmp_path):
     class FailedGateway:
         def submit(self, payload, request_id):
-            return Result(False, registration_number=None, message="downstream unavailable")
+            return Result(
+                False,
+                registration_number=None,
+                message="downstream unavailable",
+            )
 
-    deal = Deal("OPP-007", "Acme", "Platform", "India", 100.0, "Technology", "Databricks", "2026-09-30", True, "Not Registered")
+    deal = Deal(
+        "OPP-007",
+        "Acme",
+        "Platform",
+        "India",
+        100.0,
+        "Technology",
+        "Databricks",
+        "2026-09-30",
+        True,
+        "Not Registered",
+    )
     request = approved_request("OPP-007")
     audit = AuditRepository(tmp_path / "audit.db")
 

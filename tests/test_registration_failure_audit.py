@@ -23,9 +23,15 @@ def test_failed_submission_is_not_marked_processed(tmp_path):
     from audit.repository import AuditRepository
 
     deal = Deal(
-        opportunity_id="OPP-FAIL-001", account_name="Acme", opportunity_name="Platform",
-        country="India", amount=100.0, industry="Technology", partner="Databricks",
-        close_date="2026-09-30", registration_required=True,
+        opportunity_id="OPP-FAIL-001",
+        account_name="Acme",
+        opportunity_name="Platform",
+        country="India",
+        amount=100.0,
+        industry="Technology",
+        partner="Databricks",
+        close_date="2026-09-30",
+        registration_required=True,
         registration_status="Not Registered",
     )
     request = RegistrationRequest(deal.opportunity_id)
@@ -37,10 +43,13 @@ def test_failed_submission_is_not_marked_processed(tmp_path):
     audit = AuditRepository(tmp_path / "audit.db")
     store = MemoryStore()
     result = RegistrationProcessor(store, FailingGateway(), audit=audit).process(
-        deal, request, {"customer_name": "Acme", "deal_name": "Platform"}
+        deal,
+        request,
+        {"customer_name": "Acme", "deal_name": "Platform"},
     )
 
     assert result.processed is False
     assert request.status == RegistrationStatus.SUBMISSION_FAILED
     assert store.processed == set()
-    assert [event["to_status"] for event in audit.history(request.request_id)][-1] == "SUBMISSION_FAILED"
+    history = audit.history(request.request_id)
+    assert history[-1]["to_status"] == "SUBMISSION_FAILED"

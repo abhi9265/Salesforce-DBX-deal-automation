@@ -1,5 +1,7 @@
 # Salesforce → Databricks Deal Automation
 
+[![CI](https://github.com/abhi9265/Salesforce-DBX-deal-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/abhi9265/Salesforce-DBX-deal-automation/actions/workflows/ci.yml)
+
 A production-minded local MVP for automating a common enterprise workflow: evaluate Salesforce opportunities, validate registration readiness, route requests through human approval, submit to a Databricks-facing adapter, prevent duplicate submissions, and retain an auditable lifecycle.
 
 > **Scope:** this repository intentionally implements the workflow end to end with synthetic Salesforce-shaped data, a mock Databricks registration adapter, SQLite persistence, deterministic business rules, and automated tests. Real Salesforce credentials and a production Databricks registration contract are adapter boundaries and are **not** claimed as implemented.
@@ -180,6 +182,8 @@ streamlit run app.py
 
 The application uses synthetic data and local persistence. No Salesforce or Databricks credentials are required for the MVP.
 
+See [`docs/DEMO.md`](docs/DEMO.md) for the short end-to-end workflow walkthrough.
+
 ## CI/CD
 
 Every push to `main` or a feature branch is tested, and pull requests are validated regardless of their target branch.
@@ -189,9 +193,10 @@ CI performs:
 1. Python 3.11 setup
 2. Dependency installation from `pyproject.toml`
 3. Editable package installation
-4. Full pytest execution
+4. Ruff quality checks
+5. Full pytest execution
 
-The CI workflow is intentionally small: the merge gate should prove that the repository can install and test cleanly before additional deployment automation is introduced.
+The CI workflow is intentionally small: the merge gate should prove that the repository can install, lint and test cleanly before additional deployment automation is introduced.
 
 ## External integration boundary
 

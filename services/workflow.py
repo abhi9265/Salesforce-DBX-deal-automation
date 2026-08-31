@@ -8,7 +8,7 @@ from services.validation import validate_deal
 
 
 class DealRegistrationWorkflow:
-    """Coordinates deterministic rules and external adapters."""
+    """Coordinate deterministic rules and durable workflow events."""
 
     def __init__(self, audit: AuditRepository) -> None:
         self.audit = audit
@@ -27,24 +27,38 @@ class DealRegistrationWorkflow:
 
     def evaluate(self, deal: Deal) -> RegistrationRequest:
         request = RegistrationRequest(opportunity_id=deal.opportunity_id)
-        self._transition(
-            request,
-            RegistrationStatus.ELIGIBLE if is_eligible(deal) else RegistrationStatus.NOT_ELIGIBLE,
+        target = (
+            RegistrationStatus.ELIGIBLE
+            if is_eligible(deal)
+            else RegistrationStatus.NOT_ELIGIBLE
         )
+        self._transition(request, target)
         if request.status == RegistrationStatus.NOT_ELIGIBLE:
             return request
 
         errors = validate_deal(self._validation_payload(deal))
         request.validation_errors = list(errors)
-        target = RegistrationStatus.VALIDATED if not errors else RegistrationStatus.VALIDATION_FAILED
-        self._transition(request, target, reason="; ".join(errors) if errors else None)
+        target = (
+            RegistrationStatus.VALIDATED
+            if not errors
+            else RegistrationStatus.VALIDATION_FAILED
+        )
+        self._transition(
+            request,
+            target,
+            reason="; ".join(errors) if errors else None,
+        )
         return request
 
     def prepare_for_review(self, request: RegistrationRequest) -> RegistrationRequest:
         self._transition(request, RegistrationStatus.READY_FOR_REVIEW)
         return request
 
-    def approve(self, request: RegistrationRequest, approver: str) -> RegistrationRequest:
+    def approve(
+        self,
+        request: RegistrationRequest,
+        approver: str,
+    ) -> RegistrationRequest:
         previous = request.status
         request.approve(approver)
         self.audit.record_transition(

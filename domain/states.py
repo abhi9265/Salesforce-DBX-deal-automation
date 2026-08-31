@@ -21,16 +21,32 @@ class RegistrationStatus(StrEnum):
 
 
 ALLOWED_TRANSITIONS: dict[RegistrationStatus, set[RegistrationStatus]] = {
-    RegistrationStatus.NEW: {RegistrationStatus.ELIGIBLE, RegistrationStatus.NOT_ELIGIBLE},
-    RegistrationStatus.ELIGIBLE: {RegistrationStatus.VALIDATED, RegistrationStatus.VALIDATION_FAILED},
-    RegistrationStatus.VALIDATED: {RegistrationStatus.READY_FOR_REVIEW, RegistrationStatus.VALIDATION_FAILED},
-    RegistrationStatus.READY_FOR_REVIEW: {RegistrationStatus.APPROVED, RegistrationStatus.REJECTED},
+    RegistrationStatus.NEW: {
+        RegistrationStatus.ELIGIBLE,
+        RegistrationStatus.NOT_ELIGIBLE,
+    },
+    RegistrationStatus.ELIGIBLE: {
+        RegistrationStatus.VALIDATED,
+        RegistrationStatus.VALIDATION_FAILED,
+    },
+    RegistrationStatus.VALIDATED: {
+        RegistrationStatus.READY_FOR_REVIEW,
+        RegistrationStatus.VALIDATION_FAILED,
+    },
+    RegistrationStatus.READY_FOR_REVIEW: {
+        RegistrationStatus.APPROVED,
+        RegistrationStatus.REJECTED,
+    },
     RegistrationStatus.APPROVED: {
         RegistrationStatus.SUBMITTED,
         RegistrationStatus.SUBMISSION_FAILED,
         RegistrationStatus.SUBMISSION_UNKNOWN,
     },
-    RegistrationStatus.SUBMITTED: {RegistrationStatus.REGISTERED, RegistrationStatus.SUBMISSION_FAILED, RegistrationStatus.SUBMISSION_UNKNOWN},
+    RegistrationStatus.SUBMITTED: {
+        RegistrationStatus.REGISTERED,
+        RegistrationStatus.SUBMISSION_FAILED,
+        RegistrationStatus.SUBMISSION_UNKNOWN,
+    },
     RegistrationStatus.NOT_ELIGIBLE: set(),
     RegistrationStatus.VALIDATION_FAILED: set(),
     RegistrationStatus.REJECTED: set(),
@@ -42,4 +58,6 @@ ALLOWED_TRANSITIONS: dict[RegistrationStatus, set[RegistrationStatus]] = {
 
 def assert_transition(current: RegistrationStatus, target: RegistrationStatus) -> None:
     if target not in ALLOWED_TRANSITIONS.get(current, set()):
-        raise InvalidTransitionError(f"Invalid registration transition: {current} -> {target}")
+        raise InvalidTransitionError(
+            f"Invalid registration transition: {current} -> {target}"
+        )

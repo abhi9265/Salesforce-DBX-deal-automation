@@ -1,6 +1,6 @@
 # Salesforce → Databricks Deal Automation
 
-[![CI](https://github.com/abhi9265/Salesforce-DBX-deal-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/abhi9265/Salesforce-DBX-deal-automation/actions/workflows/ci.yml)
+[![CI](https://github.com/abhi9265/Salesforce-DBX-deal-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/abhi9265/Salesforce-DBX-deal-automation/actions/workflows/ci.yml) [![Benchmarks](https://img.shields.io/badge/benchmarks-GitHub%20Actions-blue)](benchmarks/)
 
 > **Enterprise data-integration portfolio project:** automate Salesforce deal-registration readiness with deterministic validation, human approval, idempotent submission, durable audit history and a Databricks-facing adapter boundary.
 >
@@ -9,6 +9,24 @@
 A production-minded local MVP for automating a common enterprise workflow: evaluate Salesforce opportunities, validate registration readiness, route requests through human approval, submit to a Databricks-facing adapter, prevent duplicate submissions, and retain an auditable lifecycle.
 
 > **Scope:** this repository intentionally implements the workflow end to end with synthetic Salesforce-shaped data, a mock Databricks registration adapter, SQLite persistence, deterministic business rules, and automated tests. Real Salesforce credentials and a production Databricks registration contract are adapter boundaries and are **not** claimed as implemented.
+
+## Application Preview
+
+The screenshots below are from the **actual Streamlit MVP running locally from this repository**.
+
+### Deal Readiness
+
+![Deal Readiness dashboard](IMG_9970.png)
+
+*Live local execution — opportunity inventory, readiness/validation results and deal-level review data.*
+
+### Registration Workflow & Audit
+
+![Registration Workflow](IMG_9971.png)
+
+*Live local execution — request state, workflow identity, validation/approval status and persisted audit history.*
+
+> **Run it yourself:** `streamlit run app.py` — the MVP uses synthetic data and local persistence; no production Salesforce or Databricks credentials are required.
 
 ## Why this project exists
 
@@ -126,7 +144,7 @@ A request cannot be submitted without approval, and a request cannot become `REG
 - Domain logic separated from integration adapters
 - Protocol-based integration boundaries
 - Unit + integration + end-to-end tests
-- GitHub Actions CI
+- GitHub Actions CI and benchmark workflows
 - Deterministic Python packaging
 - Synthetic fixtures only
 - No production credentials or undocumented external contracts
@@ -145,9 +163,10 @@ A request cannot be submitted without approval, and a request cannot become `REG
 ├── domain/               Deal/request models, states and domain exceptions
 ├── services/             Sync, validation, mapping and registration orchestration
 ├── tests/                Unit, integration and end-to-end tests
+├── benchmarks/           Reproducible benchmark methodology and results
 ├── app.py                Streamlit local MVP
 ├── pyproject.toml        Packaging, dependencies and pytest configuration
-└── .github/workflows/    CI automation
+└── .github/workflows/    CI and benchmark automation
 ```
 
 ## Local quick start
@@ -187,6 +206,14 @@ streamlit run app.py
 The application uses synthetic data and local persistence. No Salesforce or Databricks credentials are required for the MVP.
 
 See [`docs/DEMO.md`](docs/DEMO.md) for the short end-to-end workflow walkthrough.
+
+## Benchmark Evidence
+
+The repository includes a reproducible benchmark workflow executed by GitHub Actions. Benchmark results are generated from actual workflow runs rather than manually entered performance claims.
+
+The benchmark measures executable workflow/test behavior on the GitHub-hosted runner and is intended as **reproducibility and regression evidence**, not a production-capacity guarantee.
+
+See [`benchmarks/`](benchmarks/) and the GitHub Actions workflow for methodology and the latest published result.
 
 ## CI/CD
 

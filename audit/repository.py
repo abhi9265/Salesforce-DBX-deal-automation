@@ -76,10 +76,15 @@ class AuditRepository:
                     updated_at=CURRENT_TIMESTAMP
                 """,
                 (
-                    payload["request_id"], payload["opportunity_id"], payload["status"],
-                    json.dumps(payload["validation_errors"]), payload["approved_by"],
-                    payload["approved_at"], payload["registration_number"],
-                    payload["submitted_at"], payload["error"],
+                    payload["request_id"],
+                    payload["opportunity_id"],
+                    payload["status"],
+                    json.dumps(payload["validation_errors"]),
+                    payload["approved_by"],
+                    payload["approved_at"],
+                    payload["registration_number"],
+                    payload["submitted_at"],
+                    payload["error"],
                 ),
             )
 
@@ -95,9 +100,14 @@ class AuditRepository:
         metadata: dict[str, Any] | None = None,
     ) -> None:
         event = RegistrationEvent.now(
-            event_id=uuid4(), request_id=request_id, opportunity_id=opportunity_id,
-            from_status=from_status, to_status=to_status, actor=actor,
-            reason=reason, metadata=metadata,
+            event_id=uuid4(),
+            request_id=request_id,
+            opportunity_id=opportunity_id,
+            from_status=from_status,
+            to_status=to_status,
+            actor=actor,
+            reason=reason,
+            metadata=metadata,
         )
         with self._connect() as connection:
             connection.execute(
@@ -108,9 +118,15 @@ class AuditRepository:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    str(event.event_id), str(event.request_id), event.opportunity_id,
-                    event.from_status, event.to_status, event.actor, event.reason,
-                    event.occurred_at, json.dumps(event.metadata),
+                    str(event.event_id),
+                    str(event.request_id),
+                    event.opportunity_id,
+                    event.from_status,
+                    event.to_status,
+                    event.actor,
+                    event.reason,
+                    event.occurred_at,
+                    json.dumps(event.metadata),
                 ),
             )
 
@@ -123,10 +139,15 @@ class AuditRepository:
 
     def list_events(self, request_id: UUID) -> list[sqlite3.Row]:
         with self._connect() as connection:
-            return list(connection.execute(
-                "SELECT * FROM registration_events WHERE request_id = ? ORDER BY occurred_at, rowid",
-                (str(request_id),),
-            ))
+            return list(
+                connection.execute(
+                    (
+                        "SELECT * FROM registration_events "
+                        "WHERE request_id = ? ORDER BY occurred_at, rowid"
+                    ),
+                    (str(request_id),),
+                )
+            )
 
     def history(self, request_id: UUID) -> list[dict[str, Any]]:
         """Compatibility view for callers that need JSON-like event records."""

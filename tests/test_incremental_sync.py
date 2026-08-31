@@ -25,13 +25,19 @@ class FakeSource:
         self.deals = deals
 
     def fetch_updated_since(self, watermark):
-        return [d for d in self.deals if watermark is None or d.source_updated_at > watermark]
+        return [
+            d
+            for d in self.deals
+            if watermark is None or d.source_updated_at > watermark
+        ]
 
 
 def test_incremental_sync_returns_changes_and_next_watermark():
     first = deal("OPP-1", "2026-08-19T10:00:00+00:00")
     second = deal("OPP-2", "2026-08-19T11:00:00+00:00")
-    result = sync_incremental(FakeSource([first, second]), datetime(2026, 8, 19, 9, tzinfo=timezone.utc))
+    watermark = datetime(2026, 8, 19, 9, tzinfo=timezone.utc)
+    result = sync_incremental(FakeSource([first, second]), watermark)
+
     assert [d.opportunity_id for d in result.deals] == ["OPP-1", "OPP-2"]
     assert result.next_watermark == second.source_updated_at
 
@@ -39,5 +45,6 @@ def test_incremental_sync_returns_changes_and_next_watermark():
 def test_watermark_does_not_change_without_records():
     watermark = datetime(2026, 8, 19, 9, tzinfo=timezone.utc)
     result = sync_incremental(FakeSource([]), watermark)
+
     assert result.deals == []
     assert result.next_watermark == watermark

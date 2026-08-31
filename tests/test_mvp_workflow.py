@@ -1,10 +1,10 @@
 from pathlib import Path
 
+from adapters.salesforce.mock_salesforce import MockSalesforceAdapter
 from audit.repository import AuditRepository
 from domain.states import RegistrationStatus
 from services.eligibility import is_eligible
 from services.workflow import DealRegistrationWorkflow
-from adapters.salesforce.mock_salesforce import MockSalesforceAdapter
 
 
 FIXTURE = Path("data/sample_opportunities.csv")

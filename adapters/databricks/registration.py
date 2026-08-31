@@ -13,11 +13,25 @@ class RegistrationResult:
 
 
 class DatabricksRegistrationAdapter:
-    """Draft downstream contract; replace implementation with the authorized DBX interface."""
+    """Deterministic local stand-in for the downstream registration contract."""
+
+    REQUIRED_FIELDS = (
+        "customer_name",
+        "deal_name",
+        "country",
+        "deal_amount",
+        "industry",
+        "partner_name",
+        "expected_close_date",
+    )
 
     def submit(self, payload: Mapping[str, Any], request_id: UUID) -> RegistrationResult:
-        if not payload.get("customer_name") or not payload.get("deal_name"):
-            return RegistrationResult(False, message="Draft contract requires customer_name and deal_name")
+        missing = [field for field in self.REQUIRED_FIELDS if not payload.get(field)]
+        if missing:
+            return RegistrationResult(
+                accepted=False,
+                message=f"Missing required fields: {', '.join(missing)}",
+            )
         return RegistrationResult(
             accepted=True,
             registration_number=f"DBX-{str(request_id)[:8].upper()}",

@@ -26,6 +26,11 @@ lint = [
 include = ["adapters*", "audit*", "config*", "domain*", "services*"]
 exclude = ["tests*", "src*"]
 
+# Streamlit Community Cloud detects poetry.lock and may use Poetry for dependency installation.
+# This project is packaged with setuptools, so tell Poetry not to install the repository root.
+[tool.poetry]
+package-mode = false
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

@@ -2,6 +2,10 @@
 
 [![CI](https://github.com/abhi9265/Salesforce-DBX-deal-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/abhi9265/Salesforce-DBX-deal-automation/actions/workflows/ci.yml)
 
+> **Enterprise data-integration portfolio project:** automate Salesforce deal-registration readiness with deterministic validation, human approval, idempotent submission, durable audit history and a Databricks-facing adapter boundary.
+>
+> **Topics:** `Python` · `Streamlit` · `Salesforce` · `Databricks` · `Data Engineering` · `Workflow Automation` · `Idempotency` · `System Design`
+
 A production-minded local MVP for automating a common enterprise workflow: evaluate Salesforce opportunities, validate registration readiness, route requests through human approval, submit to a Databricks-facing adapter, prevent duplicate submissions, and retain an auditable lifecycle.
 
 > **Scope:** this repository intentionally implements the workflow end to end with synthetic Salesforce-shaped data, a mock Databricks registration adapter, SQLite persistence, deterministic business rules, and automated tests. Real Salesforce credentials and a production Databricks registration contract are adapter boundaries and are **not** claimed as implemented.

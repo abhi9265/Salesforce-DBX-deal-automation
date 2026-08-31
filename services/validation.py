@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
-from typing import Any, Mapping
+from typing import Any
 
 from domain.policy import DEFAULT_POLICY, RegistrationPolicy
 
@@ -10,7 +11,10 @@ def _blank(value: Any) -> bool:
     return value is None or str(value).strip() == ""
 
 
-def validate_deal(deal: Mapping[str, Any], policy: RegistrationPolicy = DEFAULT_POLICY) -> list[str]:
+def validate_deal(
+    deal: Mapping[str, Any],
+    policy: RegistrationPolicy = DEFAULT_POLICY,
+) -> list[str]:
     errors: list[str] = []
 
     for field in policy.required_fields:
@@ -39,6 +43,8 @@ def validate_deal(deal: Mapping[str, Any], policy: RegistrationPolicy = DEFAULT_
     for field, allowed in policy.allowed_values.items():
         value = deal.get(field)
         if allowed and not _blank(value) and str(value).strip() not in allowed:
-            errors.append(f"Invalid value: {field} must be one of {list(allowed)}")
+            errors.append(
+                f"Invalid value: {field} must be one of {list(allowed)}"
+            )
 
     return errors

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "salesforce-dbx-deal-automation"
-version = "0.2.0"
+version = "0.3.0"
 description = "Rules-driven Salesforce to Databricks deal registration workflow"
 requires-python = ">=3.11,<3.13"
 dependencies = [
@@ -18,6 +18,9 @@ dependencies = [
 test = [
   "pytest>=8,<9",
 ]
+lint = [
+  "ruff>=0.12,<1",
+]
 
 [tool.setuptools.packages.find]
 include = ["adapters*", "audit*", "config*", "domain*", "services*"]
@@ -26,3 +29,10 @@ exclude = ["tests*", "src*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

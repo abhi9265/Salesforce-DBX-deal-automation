@@ -21,7 +21,10 @@ def test_draft_databricks_adapter_returns_registration_number():
 
 
 def test_draft_databricks_adapter_rejects_incomplete_payload():
-    result = DatabricksRegistrationAdapter().submit({"customer_name": "Acme"}, uuid4())
+    result = DatabricksRegistrationAdapter().submit(
+        {"customer_name": "Acme"},
+        uuid4(),
+    )
     assert result.accepted is False
     assert result.registration_number is None
     assert "deal_name" in result.message

@@ -15,7 +15,11 @@ TARGET = os.getenv("BENCHMARK_TARGET", "tests")
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     start = time.perf_counter()
-    completed = subprocess.run(["python", "-m", "pytest", TARGET, "-q"], text=True, capture_output=True)
+    completed = subprocess.run(
+        ["python", "-m", "pytest", TARGET, "-q"],
+        text=True,
+        capture_output=True,
+    )
     elapsed = time.perf_counter() - start
     if completed.returncode:
         print(completed.stdout)
@@ -30,7 +34,8 @@ def main() -> None:
     (OUT / "results.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     with (OUT / "results.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=result.keys())
-        writer.writeheader(); writer.writerow(result)
+        writer.writeheader()
+        writer.writerow(result)
     print(json.dumps(result, indent=2))
 
 

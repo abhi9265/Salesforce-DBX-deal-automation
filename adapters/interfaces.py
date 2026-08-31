@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Protocol, Sequence
+from collections.abc import Sequence
+from typing import Protocol
 
 from domain.models import Deal
 
@@ -17,5 +18,10 @@ class RegistrationDestination(Protocol):
 
 
 class RegistrationResultStore(Protocol):
-    def record(self, opportunity_id: str, status: str, registration_number: str | None = None) -> None:
+    def record(
+        self,
+        opportunity_id: str,
+        status: str,
+        registration_number: str | None = None,
+    ) -> None:
         ...

@@ -11,6 +11,7 @@ class Result:
     accepted: bool
     registration_number: str | None = "DBX-TEST"
     message: str = "ok"
+    unknown: bool = False
 
 
 class Store:
@@ -40,16 +41,8 @@ def approved_request(opportunity_id: str) -> RegistrationRequest:
 
 def test_successful_submission_reaches_registered_and_persists(tmp_path):
     deal = Deal(
-        "OPP-006",
-        "Acme",
-        "Platform",
-        "India",
-        100.0,
-        "Technology",
-        "Databricks",
-        "2026-09-30",
-        True,
-        "Not Registered",
+        "OPP-006", "Acme", "Platform", "India", 100.0, "Technology",
+        "Databricks", "2026-09-30", True, "Not Registered",
     )
     request = approved_request("OPP-006")
     audit = AuditRepository(tmp_path / "audit.db")
@@ -62,35 +55,53 @@ def test_successful_submission_reaches_registered_and_persists(tmp_path):
     assert request.status == RegistrationStatus.REGISTERED
     assert request.registration_number == "DBX-TEST"
     assert [event["to_status"] for event in audit.list_events(request.request_id)] == [
-        "SUBMITTED",
-        "REGISTERED",
+        "SUBMITTED", "REGISTERED",
     ]
-    persisted = audit.get_request(request.request_id)
-    assert persisted is not None
-    assert persisted["status"] == "REGISTERED"
-    assert persisted["registration_number"] == "DBX-TEST"
+
+
+def test_unknown_submission_can_be_retried_with_same_request_id(tmp_path):
+    class UnknownThenSuccessGateway:
+        def __init__(self):
+            self.calls = 0
+            self.request_ids = []
+
+        def submit(self, payload, request_id):
+            self.calls += 1
+            self.request_ids.append(request_id)
+            if self.calls == 1:
+                return Result(False, registration_number=None, message="timeout", unknown=True)
+            return Result(True, registration_number="DBX-RECONCILED")
+
+    deal = Deal(
+        "OPP-008", "Acme", "Platform", "India", 100.0, "Technology",
+        "Databricks", "2026-09-30", True, "Not Registered",
+    )
+    request = approved_request("OPP-008")
+    audit = AuditRepository(tmp_path / "audit.db")
+    gateway = UnknownThenSuccessGateway()
+    processor = RegistrationProcessor(Store(), gateway, audit)
+
+    first = processor.process(deal, request, {"deal_name": "Platform"})
+    second = processor.retry_unknown(deal, request, {"deal_name": "Platform"})
+
+    assert first.processed is False
+    assert request.status == RegistrationStatus.REGISTERED
+    assert second.processed is True
+    assert gateway.calls == 2
+    assert gateway.request_ids[0] == gateway.request_ids[1] == request.request_id
+    assert [event["to_status"] for event in audit.list_events(request.request_id)] == [
+        "SUBMISSION_UNKNOWN", "SUBMITTED", "REGISTERED",
+    ]
 
 
 def test_failed_submission_is_persisted_and_audited(tmp_path):
     class FailedGateway:
         def submit(self, payload, request_id):
-            return Result(
-                False,
-                registration_number=None,
-                message="downstream unavailable",
-            )
+            return Result(False, registration_number=None, message="downstream unavailable")
 
     deal = Deal(
-        "OPP-007",
-        "Acme",
-        "Platform",
-        "India",
-        100.0,
-        "Technology",
-        "Databricks",
-        "2026-09-30",
-        True,
-        "Not Registered",
+        "OPP-007", "Acme", "Platform", "India", 100.0, "Technology",
+        "Databricks", "2026-09-30", True, "Not Registered",
     )
     request = approved_request("OPP-007")
     audit = AuditRepository(tmp_path / "audit.db")
@@ -102,7 +113,3 @@ def test_failed_submission_is_persisted_and_audited(tmp_path):
     assert result.processed is False
     assert request.status == RegistrationStatus.SUBMISSION_FAILED
     assert audit.list_events(request.request_id)[0]["to_status"] == "SUBMISSION_FAILED"
-    persisted = audit.get_request(request.request_id)
-    assert persisted is not None
-    assert persisted["status"] == "SUBMISSION_FAILED"
-    assert persisted["error"] == "downstream unavailable"

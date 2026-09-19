@@ -10,6 +10,7 @@ class RegistrationResult:
     accepted: bool
     registration_number: str | None = None
     message: str | None = None
+    unknown: bool = False
 
 
 class DatabricksRegistrationAdapter:

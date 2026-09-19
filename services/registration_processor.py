@@ -66,6 +66,42 @@ class RegistrationProcessor:
             )
             self.audit.save_request(request)
 
+    def _apply_result(
+        self,
+        request: RegistrationRequest,
+        result: Any,
+    ) -> ProcessingResult:
+        if not getattr(result, "accepted", False):
+            previous = request.status
+            target = (
+                RegistrationStatus.SUBMISSION_UNKNOWN
+                if getattr(result, "unknown", False)
+                else RegistrationStatus.SUBMISSION_FAILED
+            )
+            request.transition(
+                target,
+                reason=getattr(result, "message", "submission_failed"),
+            )
+            self._record(request, previous, request.error)
+            return ProcessingResult(
+                request=request,
+                processed=False,
+                skipped=False,
+                reason=request.error,
+            )
+
+        previous = request.status
+        registration_number = getattr(result, "registration_number", None)
+        request.mark_submitted(registration_number)
+        self._record(request, previous)
+
+        if registration_number and request.status == RegistrationStatus.SUBMITTED:
+            previous = request.status
+            request.mark_registered(registration_number)
+            self._record(request, previous)
+
+        return ProcessingResult(request=request, processed=True, skipped=False)
+
     def process(
         self,
         deal: Deal,
@@ -89,32 +125,40 @@ class RegistrationProcessor:
                 reason="unchanged_source_version",
             )
 
-        result = self.gateway.submit(payload, request.request_id)
-        if not getattr(result, "accepted", False):
-            previous = request.status
-            request.transition(
-                RegistrationStatus.SUBMISSION_FAILED,
-                reason=getattr(result, "message", "submission_failed"),
-            )
-            self._record(request, previous, request.error)
+        result = self._apply_result(request, self.gateway.submit(payload, request.request_id))
+        if result.processed:
+            self.store.mark_processed(deal.opportunity_id, fingerprint)
+            if self.audit:
+                self.audit.save_request(request)
+        return result
+
+    def retry_unknown(
+        self,
+        deal: Deal,
+        request: RegistrationRequest,
+        payload: dict[str, Any],
+    ) -> ProcessingResult:
+        """Retry an ambiguous submission using the same idempotency key."""
+        if request.status != RegistrationStatus.SUBMISSION_UNKNOWN:
             return ProcessingResult(
                 request=request,
                 processed=False,
-                skipped=False,
-                reason=request.error,
+                skipped=True,
+                reason="retry_requires_unknown_submission",
             )
 
-        previous = request.status
-        registration_number = getattr(result, "registration_number", None)
-        request.mark_submitted(registration_number)
-        self._record(request, previous)
+        fingerprint = deal_fingerprint(deal)
+        if self.store.has_processed(deal.opportunity_id, fingerprint):
+            return ProcessingResult(
+                request=request,
+                processed=False,
+                skipped=True,
+                reason="unchanged_source_version",
+            )
 
-        if registration_number and request.status == RegistrationStatus.SUBMITTED:
-            previous = request.status
-            request.mark_registered(registration_number)
-            self._record(request, previous)
-
-        self.store.mark_processed(deal.opportunity_id, fingerprint)
-        if self.audit:
-            self.audit.save_request(request)
-        return ProcessingResult(request=request, processed=True, skipped=False)
+        result = self._apply_result(request, self.gateway.submit(payload, request.request_id))
+        if result.processed:
+            self.store.mark_processed(deal.opportunity_id, fingerprint)
+            if self.audit:
+                self.audit.save_request(request)
+        return result

@@ -49,3 +49,40 @@ def test_dbx_http_adapter_classifies_timeout_as_unknown():
     assert result.accepted is False
     assert result.unknown is True
     assert "unknown" in result.message.lower()
+
+
+class _RegistrationHandler(__import__("http.server").server.BaseHTTPRequestHandler):
+    seen_idempotency_keys = []
+
+    def do_POST(self):
+        self.__class__.seen_idempotency_keys.append(self.headers["Idempotency-Key"])
+        self.send_response(201)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(b'{"registration_number":"DBX-LIVE-TEST"}')
+
+    def log_message(self, *_args):
+        return
+
+
+def test_dbx_http_adapter_works_against_local_http_boundary():
+    from http.server import ThreadingHTTPServer
+    from threading import Thread
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _RegistrationHandler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        request_id = uuid4()
+        result = DatabricksRegistrationHttpAdapter(
+            DatabricksRegistrationConfig(
+                f"http://127.0.0.1:{server.server_port}/register", "test-token"
+            ),
+        ).submit({"deal_name": "Acme"}, request_id)
+
+        assert result.accepted is True
+        assert result.registration_number == "DBX-LIVE-TEST"
+        assert _RegistrationHandler.seen_idempotency_keys[-1] == str(request_id)
+    finally:
+        server.shutdown()
+        server.server_close()

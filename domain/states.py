@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from enum import StrEnum
 
 from domain.exceptions import InvalidTransitionError
@@ -47,11 +45,15 @@ ALLOWED_TRANSITIONS: dict[RegistrationStatus, set[RegistrationStatus]] = {
         RegistrationStatus.SUBMISSION_FAILED,
         RegistrationStatus.SUBMISSION_UNKNOWN,
     },
+    RegistrationStatus.SUBMISSION_UNKNOWN: {
+        RegistrationStatus.SUBMITTED,
+        RegistrationStatus.SUBMISSION_FAILED,
+        RegistrationStatus.SUBMISSION_UNKNOWN,
+    },
     RegistrationStatus.NOT_ELIGIBLE: set(),
     RegistrationStatus.VALIDATION_FAILED: set(),
     RegistrationStatus.REJECTED: set(),
     RegistrationStatus.SUBMISSION_FAILED: set(),
-    RegistrationStatus.SUBMISSION_UNKNOWN: set(),
     RegistrationStatus.REGISTERED: set(),
 }
 

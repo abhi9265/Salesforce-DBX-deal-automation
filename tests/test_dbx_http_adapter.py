@@ -1,6 +1,8 @@
 from unittest.mock import Mock
 from uuid import uuid4
 
+import requests
+
 from adapters.databricks.http_registration import DatabricksRegistrationHttpAdapter
 from config.integrations import DatabricksRegistrationConfig
 
@@ -33,3 +35,17 @@ def test_dbx_http_adapter_classifies_retryable_failure():
 
     assert result.accepted is False
     assert "retryable" in result.message.lower()
+
+
+def test_dbx_http_adapter_classifies_timeout_as_unknown():
+    session = Mock()
+    session.post.side_effect = requests.Timeout("socket timed out")
+
+    result = DatabricksRegistrationHttpAdapter(
+        DatabricksRegistrationConfig("https://dbx.example/register", "token"),
+        session=session,
+    ).submit({}, uuid4())
+
+    assert result.accepted is False
+    assert result.unknown is True
+    assert "unknown" in result.message.lower()

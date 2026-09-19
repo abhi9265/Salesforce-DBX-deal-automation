@@ -241,7 +241,29 @@ if status in {"SUBMITTED", "REGISTERED", "SUBMISSION_FAILED", "SUBMISSION_UNKNOW
     if request.registration_number:
         st.success(f"Registration number: {request.registration_number}")
     if status == "SUBMISSION_UNKNOWN":
-        st.warning("Downstream submission outcome is unknown; the workflow does not treat unknown as success.")
+        st.warning(
+            "Downstream submission outcome is unknown. The workflow does not treat "
+            "unknown as success; reconciliation reuses the same idempotency key."
+        )
+        retry_payload = map_to_dbx_draft(
+            {
+                "account_name": selected.account_name,
+                "opportunity_name": selected.opportunity_name,
+                "country": selected.country,
+                "amount": selected.amount,
+                "industry": selected.industry,
+                "partner": selected.partner,
+                "close_date": selected.close_date,
+            }
+        )
+        if st.button("Retry / reconcile submission", type="primary"):
+            result = processor.retry_unknown(selected, request, retry_payload)
+            if result.processed:
+                st.success(f"Reconciled registration: {request.registration_number}")
+                st.session_state.requests[selected_id] = request
+                st.rerun()
+            else:
+                st.warning(result.reason or "Submission is still unresolved.")
 
 # -----------------------------------------------------------------------------
 # Request state + audit, grouped into a secondary inspection area.

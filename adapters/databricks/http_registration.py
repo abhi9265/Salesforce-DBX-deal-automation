@@ -26,16 +26,24 @@ class DatabricksRegistrationHttpAdapter:
         payload: Mapping[str, Any],
         request_id: UUID,
     ) -> RegistrationResult:
-        response = self.session.post(
-            self.config.endpoint,
-            headers={
-                "Authorization": f"Bearer {self.config.token}",
-                "Content-Type": "application/json",
-                "Idempotency-Key": str(request_id),
-            },
-            json=dict(payload),
-            timeout=self.config.timeout_seconds,
-        )
+        try:
+            response = self.session.post(
+                self.config.endpoint,
+                headers={
+                    "Authorization": f"Bearer {self.config.token}",
+                    "Content-Type": "application/json",
+                    "Idempotency-Key": str(request_id),
+                },
+                json=dict(payload),
+                timeout=self.config.timeout_seconds,
+            )
+        except (requests.Timeout, requests.ConnectionError) as exc:
+            return RegistrationResult(
+                accepted=False,
+                message=f"Downstream outcome unknown after transport error: {exc}",
+                unknown=True,
+            )
+
         if 200 <= response.status_code < 300:
             body = response.json() if response.content else {}
             return RegistrationResult(

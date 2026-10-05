@@ -45,10 +45,24 @@ class DatabricksRegistrationHttpAdapter:
             )
 
         if 200 <= response.status_code < 300:
-            body = response.json() if response.content else {}
+            try:
+                body = response.json() if response.content else {}
+            except ValueError:
+                return RegistrationResult(
+                    accepted=False,
+                    message="Downstream returned malformed JSON after acceptance",
+                    unknown=True,
+                )
+            registration_number = body.get("registration_number")
+            if not registration_number:
+                return RegistrationResult(
+                    accepted=False,
+                    message="Downstream returned no registration number after acceptance",
+                    unknown=True,
+                )
             return RegistrationResult(
                 accepted=True,
-                registration_number=body.get("registration_number"),
+                registration_number=registration_number,
                 message=body.get("message"),
             )
         if response.status_code in {408, 429, 500, 502, 503, 504}:

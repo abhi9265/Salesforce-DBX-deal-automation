@@ -51,6 +51,37 @@ def test_dbx_http_adapter_classifies_timeout_as_unknown():
     assert "unknown" in result.message.lower()
 
 
+def test_dbx_http_adapter_classifies_malformed_success_as_unknown():
+    session = Mock()
+    session.post.return_value = Mock(status_code=201, content=b"not-json")
+    session.post.return_value.json.side_effect = ValueError("invalid json")
+
+    result = DatabricksRegistrationHttpAdapter(
+        DatabricksRegistrationConfig("https://dbx.example/register", "token"),
+        session=session,
+    ).submit({}, uuid4())
+
+    assert result.accepted is False
+    assert result.unknown is True
+    assert "malformed json" in result.message.lower()
+
+
+def test_dbx_http_adapter_classifies_missing_registration_number_as_unknown():
+    session = Mock()
+    response = Mock(status_code=201, content=b'{"message":"accepted"}')
+    response.json.return_value = {"message": "accepted"}
+    session.post.return_value = response
+
+    result = DatabricksRegistrationHttpAdapter(
+        DatabricksRegistrationConfig("https://dbx.example/register", "token"),
+        session=session,
+    ).submit({}, uuid4())
+
+    assert result.accepted is False
+    assert result.unknown is True
+    assert "registration number" in result.message.lower()
+
+
 class _RegistrationHandler(__import__("http.server").server.BaseHTTPRequestHandler):
     seen_idempotency_keys = []
 

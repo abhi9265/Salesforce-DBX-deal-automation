@@ -53,6 +53,12 @@ class DatabricksRegistrationHttpAdapter:
                     message="Downstream returned malformed JSON after acceptance",
                     unknown=True,
                 )
+            if not isinstance(body, Mapping):
+                return RegistrationResult(
+                    accepted=False,
+                    message="Downstream returned a non-object JSON body after acceptance",
+                    unknown=True,
+                )
             registration_number = body.get("registration_number")
             if not registration_number:
                 return RegistrationResult(

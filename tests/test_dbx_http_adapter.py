@@ -1,6 +1,7 @@
 from unittest.mock import Mock
 from uuid import uuid4
 
+import pytest
 import requests
 
 from adapters.databricks.http_registration import DatabricksRegistrationHttpAdapter
@@ -80,6 +81,31 @@ def test_dbx_http_adapter_classifies_missing_registration_number_as_unknown():
     assert result.accepted is False
     assert result.unknown is True
     assert "registration number" in result.message.lower()
+
+
+@pytest.mark.parametrize(
+    ("body", "content"),
+    [
+        (None, b"null"),
+        (["DBX-100"], b'["DBX-100"]'),
+        ("DBX-100", b'"DBX-100"'),
+        (42, b"42"),
+    ],
+)
+def test_dbx_http_adapter_classifies_non_object_success_body_as_unknown(body, content):
+    session = Mock()
+    response = Mock(status_code=201, content=content)
+    response.json.return_value = body
+    session.post.return_value = response
+
+    result = DatabricksRegistrationHttpAdapter(
+        DatabricksRegistrationConfig("https://dbx.example/register", "token"),
+        session=session,
+    ).submit({}, uuid4())
+
+    assert result.accepted is False
+    assert result.unknown is True
+    assert "non-object json body" in result.message.lower()
 
 
 class _RegistrationHandler(__import__("http.server").server.BaseHTTPRequestHandler):

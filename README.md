@@ -251,7 +251,7 @@ Same workflow engine
 Authorized Databricks registration interface
 ```
 
-The production adapters should be implemented only after the real authentication model and downstream contract are confirmed. This avoids building a fake integration that looks impressive but is not deployable. The expected client-side HTTP semantics are documented in [`docs/external-api-contract.md`](docs/external-api-contract.md), including idempotency, timeout/unknown handling, retryable responses and security expectations.
+The production adapters should be implemented only after the real authentication model and downstream contract are confirmed. This avoids building a fake integration that looks impressive but is not deployable. The expected client-side HTTP semantics are documented in [`docs/external-api-contract.md`](docs/external-api-contract.md), including idempotency, timeout/unknown handling, retryable responses and security expectations. For a customer-facing discovery and pilot, [`docs/customer-pilot-acceptance.md`](docs/customer-pilot-acceptance.md) lists the decisions, acceptance gates and handoff evidence to collect before any production claim.
 
 ## Design decisions
 
